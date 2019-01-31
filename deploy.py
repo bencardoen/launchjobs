@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import os
+import itertools
 import time
 import json
 # @author Ben Cardoen
@@ -63,10 +64,11 @@ def runbatch(cmds, batchsize):
                     if len(cmds):
                         nc = cmds.pop()
                         ps[i] = (nc, launch(nc))
-                        print('----- Launching new job')
+                        print('----- Job completed, filling empty slot with \n\t {} '.format(nc))
                     else:
                         ps[i] = (None, None)
-            time.sleep(1)
+            time.sleep(0.1)
+        time.sleep(1)
     print("\n----- All processes done\n")
     return statuscodes
 
@@ -76,13 +78,13 @@ if __name__ == '__main__':
     config = readconfig('.', 'config.json')
     script = config['script']
     scriptpath = config['script_path']
-    range_1 = config['param_1']
-    range_2 = config['param_2']
     batchsize = config['batchsize']
     cmd = []
-    for r in range_1:
-        for s in range_2:
-            cmd.append(' {} {} {}'.format(os.path.join(scriptpath, script), r, s))
+
+    ps = config['parameters']
+    print('\t ----- Have following parameters\n \t{}'.format(" ".join(str(i) for i in ps.keys())))
+    for element in itertools.product(*[v for v in ps.values()]):
+        cmd.append('{} {}'.format(os.path.join(scriptpath, script), " ".join(str(i) for i in element)))
     print('\n\n----- Have total of {} commands to be scheduled in parallel...\n\n'.format(len(cmd)))
     s2 = time.time()
     statuscodes = runbatch(cmd, batchsize)
